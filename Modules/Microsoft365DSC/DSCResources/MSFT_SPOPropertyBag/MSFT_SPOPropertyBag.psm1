@@ -500,10 +500,14 @@ function Export-TargetResource
             $principal = $organization.Split('.')[0]
         }
 
+        $sharePointSuffix = Get-M365DSCSharePointHostSuffix -TenantId $organization
+
         if ($dscContent.ToLower().Contains($organization.ToLower()) -or `
                 $dscContent.ToLower().Contains($principal.ToLower()))
         {
-            $dscContent = $dscContent -ireplace [regex]::Escape('https://' + $principal + '.sharepoint.com/'), "https://`$(`$OrganizationName.Split('.')[0]).sharepoint.com/"
+            $tenantSiteUrl = "https://$principal$sharePointSuffix/"
+            $orgSiteReplacement = "https://`$(`$OrganizationName.Split('.')[0])$sharePointSuffix/"
+            $dscContent = $dscContent -ireplace [regex]::Escape($tenantSiteUrl), $orgSiteReplacement
             $dscContent = $dscContent -ireplace [regex]::Escape('@' + $organization), "@`$(`$OrganizationName)"
         }
         return $dscContent

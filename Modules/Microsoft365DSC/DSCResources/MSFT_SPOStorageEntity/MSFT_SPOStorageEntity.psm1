@@ -437,8 +437,11 @@ function Export-TargetResource
         }
         else
         {
-            $centralAdminUrl = "https://$principal-admin.sharepoint.com"
+            $sharePointSuffixForAdmin = Get-M365DSCSharePointHostSuffix -TenantId $organization
+            $centralAdminUrl = "https://$principal-admin$sharePointSuffixForAdmin"
         }
+
+        $sharePointSuffix = Get-M365DSCSharePointHostSuffix -AdminUrl $centralAdminUrl -TenantId $organization
 
         if ($storageEntities.Length -eq 0)
         {
@@ -483,8 +486,13 @@ function Export-TargetResource
             if ($currentDSCBlock.ToLower().Contains($organization.ToLower()) -or `
                     $currentDSCBlock.ToLower().Contains($principal.ToLower()))
             {
-                $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('https://' + $principal + '.sharepoint.com'), "https://`$(`$OrganizationName.Split('.')[0]).sharepoint.com"
-                $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('https://' + $principal + '-admin.sharepoint.com'), "https://`$(`$OrganizationName.Split('.')[0])-admin.sharepoint.com"
+                $tenantSiteHost = "https://$principal$sharePointSuffix"
+                $tenantAdminHost = "https://$principal-admin$sharePointSuffix"
+                $orgSiteReplacement = "https://`$(`$OrganizationName.Split('.')[0])$sharePointSuffix"
+                $orgAdminReplacement = "https://`$(`$OrganizationName.Split('.')[0])-admin$sharePointSuffix"
+
+                $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape($tenantSiteHost), $orgSiteReplacement
+                $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape($tenantAdminHost), $orgAdminReplacement
             }
             $dscContent += $currentDSCBlock
             Save-M365DSCPartialExport -Content $currentDSCBlock `

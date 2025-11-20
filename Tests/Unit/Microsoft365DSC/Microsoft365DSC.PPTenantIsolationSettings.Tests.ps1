@@ -90,10 +90,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else
@@ -142,10 +142,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else
@@ -200,10 +200,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else
@@ -264,10 +264,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else
@@ -328,10 +328,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else
@@ -386,10 +386,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else
@@ -459,10 +459,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else
@@ -511,10 +511,10 @@ Describe -Name $Global:DscHelper.DescribeHeader -Fixture {
                 }
 
                 Mock -CommandName Invoke-WebRequest -MockWith {
-                    if ($Uri -match 'https://login.windows.net/([A-Za-z0-9.]*)/.well-known/openid-configuration')
+                    if ($Uri -match 'https://login.microsoftonline.com/([A-Za-z0-9.]*)/.well-known/openid-configuration')
                     {
                         $tenantid = (New-HashFromTenantName -TenantName $Matches[1])
-                        $returnval = '{{"token_endpoint":"https://login.windows.net/{0}/oauth2/token"}}' -f $tenantid
+                        $returnval = '{{"token_endpoint":"https://login.microsoftonline.com/{0}/oauth2/token"}}' -f $tenantid
                         return $returnval
                     }
                     else

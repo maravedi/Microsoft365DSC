@@ -2125,6 +2125,177 @@ function Test-CodePage
 }
 
 <#
+.DESCRIPTION
+    Resolves the base login authority URL (hostname) for the provided tenant,
+    taking sovereign clouds into account.
+
+.FUNCTIONALITY
+    Private
+#>
+function Get-M365DSCLoginAuthorityBaseUrl
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $TenantIdentifier
+    )
+
+    if ([System.String]::IsNullOrWhiteSpace($TenantIdentifier) -or $TenantIdentifier -eq '*')
+    {
+        return 'https://login.microsoftonline.com'
+    }
+
+    $normalizedTenant = $TenantIdentifier.ToLowerInvariant()
+
+    if ($normalizedTenant -like '*.onmschina.cn' -or `
+        $normalizedTenant -like '*.partner.onmschina.cn' -or `
+        $normalizedTenant -like '*.onmicrosoft.cn' -or `
+        $normalizedTenant -like '*.cn')
+    {
+        return 'https://login.chinacloudapi.cn'
+    }
+
+    if ($normalizedTenant -like '*.onmicrosoft.de' -or $normalizedTenant -like '*.de')
+    {
+        return 'https://login.microsoftonline.de'
+    }
+
+    if ($normalizedTenant -like '*.onmicrosoft.us' -or `
+        $normalizedTenant -like '*.gov' -or `
+        $normalizedTenant -like '*.mil' -or `
+        $normalizedTenant -like '*.us')
+    {
+        return 'https://login.microsoftonline.us'
+    }
+
+    return 'https://login.microsoftonline.com'
+}
+
+<#
+.DESCRIPTION
+    Resolves the Azure portal base URL that must be used for admin consent
+    operations based on the tenant identifier.
+
+.FUNCTIONALITY
+    Private
+#>
+function Get-M365DSCAzurePortalBaseUrl
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [System.String]
+        $TenantIdentifier
+    )
+
+    $authority = Get-M365DSCLoginAuthorityBaseUrl -TenantIdentifier $TenantIdentifier
+    $normalizedAuthority = $authority.ToLowerInvariant()
+    if ($normalizedAuthority -like '*microsoftonline.us')
+    {
+        return 'https://main.iam.ad.ext.azure.us'
+    }
+    elseif ($normalizedAuthority -like '*microsoftonline.de')
+    {
+        return 'https://main.iam.ad.ext.azure.de'
+    }
+    elseif ($normalizedAuthority -like '*chinacloudapi.cn')
+    {
+        return 'https://main.iam.ad.ext.azure.cn'
+    }
+
+    return 'https://main.iam.ad.ext.azure.com'
+}
+
+<#
+.DESCRIPTION
+    Determines the SharePoint Online host suffix (e.g. .sharepoint.com,
+    .sharepoint.us) for the current tenant.
+
+.FUNCTIONALITY
+    Private
+#>
+function Get-M365DSCSharePointHostSuffix
+{
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param
+    (
+        [Parameter()]
+        [System.String]
+        $AdminUrl,
+
+        [Parameter()]
+        [System.String]
+        $TenantId
+    )
+
+    $resolvedAdminUrl = $AdminUrl
+    if ([System.String]::IsNullOrWhiteSpace($resolvedAdminUrl))
+    {
+        try
+        {
+            $connectionProfile = Get-MSCloudLoginConnectionProfile -Workload 'PnP' -ErrorAction Stop
+            if ($null -ne $connectionProfile -and `
+                -not [System.String]::IsNullOrWhiteSpace($connectionProfile.AdminUrl))
+            {
+                $resolvedAdminUrl = $connectionProfile.AdminUrl
+            }
+        }
+        catch
+        {
+            $resolvedAdminUrl = $null
+        }
+    }
+
+    if (-not [System.String]::IsNullOrWhiteSpace($resolvedAdminUrl))
+    {
+        try
+        {
+            $uri = [System.Uri]$resolvedAdminUrl
+            $host = $uri.Host
+            $index = $host.IndexOf('.sharepoint', [System.StringComparison]::OrdinalIgnoreCase)
+            if ($index -ge 0)
+            {
+                return $host.Substring($index)
+            }
+        }
+        catch
+        {
+            Write-Verbose -Message "Unable to derive SharePoint suffix from AdminUrl {$resolvedAdminUrl}: $_"
+        }
+    }
+
+    if (-not [System.String]::IsNullOrWhiteSpace($TenantId))
+    {
+        $normalizedTenant = $TenantId.ToLowerInvariant()
+        if ($normalizedTenant -like '*.onmicrosoft.de' -or $normalizedTenant -like '*.de')
+        {
+            return '.sharepoint.de'
+        }
+        elseif ($normalizedTenant -like '*.onmicrosoft.us' -or `
+                $normalizedTenant -like '*.us' -or `
+                $normalizedTenant -like '*.gov' -or `
+                $normalizedTenant -like '*.mil')
+        {
+            return '.sharepoint.us'
+        }
+        elseif ($normalizedTenant -like '*.onmicrosoft.cn' -or `
+                $normalizedTenant -like '*.onmschina.cn' -or `
+                $normalizedTenant -like '*.cn')
+        {
+            return '.sharepoint.cn'
+        }
+    }
+
+    return '.sharepoint.com'
+}
+
+<#
 .Description
 This function retrieves the various endpoint urls based on the cloud environment.
 
@@ -2146,9 +2317,12 @@ function Get-M365DSCAPIEndpoint
 
     try
     {
-        $webrequest = Invoke-WebRequest -Uri "https://login.windows.net/$($TenantId)/.well-known/openid-configuration" -UseBasicParsing
+        $authorityBaseUrl = Get-M365DSCLoginAuthorityBaseUrl -TenantIdentifier $TenantId
+        $openIdConfigurationUri = '{0}/{1}/.well-known/openid-configuration' -f $authorityBaseUrl, $TenantId
+        $webrequest = Invoke-WebRequest -Uri $openIdConfigurationUri -UseBasicParsing
         $response = ConvertFrom-Json $webrequest.Content
         $tenantRegionScope = $response."tenant_region_scope"
+        $tenantRegionSubScope = $response.'tenant_region_sub_scope'
 
         $endpoints = @{
             AzureManagement = $null
@@ -2158,16 +2332,34 @@ function Get-M365DSCAPIEndpoint
         {
             'USGov'
             {
-                if ($null -ne $response.'tenant_region_sub_scope' -and $response.'tenant_region_sub_scope' -eq 'DODCON')
+                if ($tenantRegionSubScope -eq 'DODCON')
                 {
-                    $endpoints.AzureManagement = "https://management.usgovcloudapi.net"
+                    $endpoints.AzureManagement = 'https://management.usgovcloudapi.mil'
                 }
+                else
+                {
+                    $endpoints.AzureManagement = 'https://management.usgovcloudapi.net'
+                }
+            }
+            'China'
+            {
+                $endpoints.AzureManagement = 'https://management.chinacloudapi.cn'
+            }
+            'Germany'
+            {
+                $endpoints.AzureManagement = 'https://management.microsoftazure.de'
             }
             default
             {
-                $endpoints.AzureManagement = "https://management.azure.com"
+                $endpoints.AzureManagement = 'https://management.azure.com'
             }
         }
+
+        if ([System.String]::IsNullOrWhiteSpace($endpoints.AzureManagement))
+        {
+            $endpoints.AzureManagement = 'https://management.azure.com'
+        }
+
         return $endpoints
     }
     catch
@@ -2958,13 +3150,56 @@ function Get-SPOAdministrationUrl
         $UseMFASwitch.Add('UseMFA', $true)
     }
 
+    try
+    {
+        $pnpProfile = Get-MSCloudLoginConnectionProfile -Workload 'PnP' -ErrorAction Stop
+        if ($null -ne $pnpProfile -and -not [System.String]::IsNullOrWhiteSpace($pnpProfile.AdminUrl))
+        {
+            $global:AdminUrl = $pnpProfile.AdminUrl
+            try
+            {
+                $adminUri = [System.Uri]$pnpProfile.AdminUrl
+                $hostPrefix = $adminUri.Host.Split('.')[0]
+                if ($hostPrefix -like '*-admin')
+                {
+                    $global:tenantName = $hostPrefix -replace '-admin', ''
+                }
+                else
+                {
+                    $global:tenantName = $hostPrefix
+                }
+            }
+            catch
+            {
+                Write-Verbose -Message "Unable to parse tenant name from AdminUrl {$($pnpProfile.AdminUrl)}: $_"
+            }
+            Write-Verbose -Message "SharePoint Online admin URL is $($global:AdminUrl)"
+            return $global:AdminUrl
+        }
+    }
+    catch
+    {
+        Write-Verbose -Message "PnP connection profile unavailable while resolving SharePoint admin URL: $_"
+    }
+
     Write-Verbose -Message 'Connection to Azure AD is required to automatically determine SharePoint Online admin URL...'
     $null = New-M365DSCConnection -Workload 'MicrosoftGraph' `
         -InboundParameters $PSBoundParameters
     Write-Verbose -Message 'Getting SharePoint Online admin URL...'
     $domain = Invoke-MgGraphRequest -Uri "beta/domains" -Method GET
-    [Array]$defaultDomain = $domain | Where-Object { ($_.id -like '*.onmicrosoft.com' -or $_.id -like '*.onmicrosoft.de' -or $_.id -like '*.onmicrosoft.us') -and $_.isInitial -eq $true } # We don't use IsDefault here because the default could be a custom domain
+    [Array]$defaultDomain = $domain | Where-Object {
+        ($_.id -like '*.onmicrosoft.com' -or `
+         $_.id -like '*.onmicrosoft.de' -or `
+         $_.id -like '*.onmicrosoft.us' -or `
+         $_.id -like '*.onmicrosoft.cn') -and $_.isInitial -eq $true
+    } # We don't use IsDefault here because the default could be a custom domain
 
+    if ($defaultDomain.Count -eq 0)
+    {
+        throw 'Unable to determine default SharePoint domain for tenant.'
+    }
+
+    $global:tenantName = $defaultDomain[0].id.Split('.')[0]
     if ($defaultDomain[0].id -like '*.onmicrosoft.com*')
     {
         $global:tenantName = $defaultDomain[0].id -replace '.onmicrosoft.com', ''
@@ -2973,7 +3208,17 @@ function Get-SPOAdministrationUrl
     {
         $global:tenantName = $defaultDomain[0].id -replace '.onmicrosoft.de', ''
     }
-    $global:AdminUrl = "https://$global:tenantName-admin.sharepoint.com"
+    elseif ($defaultDomain[0].id -like '*.onmicrosoft.us*')
+    {
+        $global:tenantName = $defaultDomain[0].id -replace '.onmicrosoft.us', ''
+    }
+    elseif ($defaultDomain[0].id -like '*.onmicrosoft.cn*')
+    {
+        $global:tenantName = $defaultDomain[0].id -replace '.onmicrosoft.cn', ''
+    }
+
+    $sharePointSuffix = Get-M365DSCSharePointHostSuffix -TenantId $defaultDomain[0].id
+    $global:AdminUrl = "https://$global:tenantName-admin$sharePointSuffix"
     Write-Verbose -Message "SharePoint Online admin URL is $global:AdminUrl"
     return $global:AdminUrl
 }
@@ -5872,13 +6117,16 @@ Export-ModuleMember -Function @(
     'Get-M365DSCAllResources',
     'Get-M365DSCAllResourcesDictionary',
     'Get-M365DSCAPIEndpoint',
+    'Get-M365DSCAzurePortalBaseUrl',
     'Get-M365DSCAuthenticationMode',
     'Get-M365DSCComponentsWithMostSecureAuthenticationType',
     'Get-M365DSCConfigurationConflict',
     'Get-M365DSCConnectedWorkloadList',
     'Get-M365DSCExportContentForResource',
+    'Get-M365DSCLoginAuthorityBaseUrl',
     'Get-M365DSCOrganization',
     'Get-M365DSCResourcesByExportMode',
+    'Get-M365DSCSharePointHostSuffix',
     'Get-M365DSCTelemetryConnectionParameter',
     'Get-M365DSCTenantDomain',
     'Get-M365DSCTenantNameFromParameterSet',

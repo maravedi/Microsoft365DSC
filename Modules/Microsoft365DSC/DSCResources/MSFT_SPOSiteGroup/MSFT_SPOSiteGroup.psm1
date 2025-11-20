@@ -510,6 +510,8 @@ function Export-TargetResource
             $principal = $organization.Split('.')[0]
         }
 
+        $sharePointSuffix = Get-M365DSCSharePointHostSuffix -TenantId $organization
+
         $dscContent = ''
         Write-M365DSCHost -Message "`r`n" -DeferWrite
         foreach ($site in $sites)
@@ -567,8 +569,13 @@ function Export-TargetResource
                         if ($currentDSCBlock.ToLower().Contains($organization.ToLower()) -or `
                                 $currentDSCBlock.ToLower().Contains($principal.ToLower()))
                         {
-                            $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('https://' + $principal + '.sharepoint.com/'), "https://`$(`$OrganizationName.Split('.')[0]).sharepoint.com/"
-                            $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('https://' + $principal + '-my.sharepoint.com/'), "https://`$(`$OrganizationName.Split('.')[0])-my.sharepoint.com/"
+                            $tenantSiteUrl = "https://$principal$sharePointSuffix/"
+                            $tenantMySiteUrl = "https://$principal-my$sharePointSuffix/"
+                            $orgSiteReplacement = "https://`$(`$OrganizationName.Split('.')[0])$sharePointSuffix/"
+                            $orgMySiteReplacement = "https://`$(`$OrganizationName.Split('.')[0])-my$sharePointSuffix/"
+
+                            $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape($tenantSiteUrl), $orgSiteReplacement
+                            $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape($tenantMySiteUrl), $orgMySiteReplacement
                             $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('@' + $organization), "@`$(`$OrganizationName)"
                         }
                         $dscContent += $currentDSCBlock

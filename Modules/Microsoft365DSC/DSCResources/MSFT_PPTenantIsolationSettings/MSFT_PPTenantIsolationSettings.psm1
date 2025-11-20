@@ -753,7 +753,9 @@ function Get-M365TenantId
         return '*'
     }
 
-    $result = Invoke-WebRequest "https://login.windows.net/$TenantName/.well-known/openid-configuration" -UseBasicParsing
+    $authorityBaseUrl = Get-M365DSCLoginAuthorityBaseUrl -TenantIdentifier $TenantName
+    $openIdConfigurationUri = '{0}/{1}/.well-known/openid-configuration' -f $authorityBaseUrl, $TenantName
+    $result = Invoke-WebRequest $openIdConfigurationUri -UseBasicParsing
     $jsonResult = $result | ConvertFrom-Json
     return $jsonResult.token_endpoint.Split('/')[3]
 }
