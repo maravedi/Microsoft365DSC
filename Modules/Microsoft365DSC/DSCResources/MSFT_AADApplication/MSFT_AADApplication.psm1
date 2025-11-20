@@ -143,7 +143,12 @@ function Get-TargetResource
 
         [Parameter()]
         [System.String[]]
-        $AccessTokens
+        $AccessTokens,
+
+        [Parameter()]
+        [ValidateSet('Global', 'USGov', 'USGovDoD', 'China', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     Write-Verbose -Message "Getting configuration of Azure AD Application '$DisplayName'"
@@ -710,7 +715,12 @@ function Set-TargetResource
 
         [Parameter()]
         [System.String[]]
-        $AccessTokens
+        $AccessTokens,
+
+        [Parameter()]
+        [ValidateSet('Global', 'USGov', 'USGovDoD', 'China', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     Write-Verbose -Message "Setting configuration of Azure AD Application '$DisplayName'"
@@ -1548,7 +1558,12 @@ function Test-TargetResource
 
         [Parameter()]
         [System.String[]]
-        $AccessTokens
+        $AccessTokens,
+
+        [Parameter()]
+        [ValidateSet('Global', 'USGov', 'USGovDoD', 'China', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     #region Telemetry

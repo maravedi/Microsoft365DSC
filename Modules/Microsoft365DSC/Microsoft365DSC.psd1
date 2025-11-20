@@ -152,7 +152,15 @@
       IconUri      = 'https://github.com/microsoft/Microsoft365DSC/blob/Dev/Modules/Microsoft365DSC/Dependencies/Images/Logo.png?raw=true'
 
       # ReleaseNotes of this module
-      ReleaseNotes = '* AADApplication
+      ReleaseNotes = '* GCCH/Sovereign Cloud Support
+  * Added Environment parameter support to connection infrastructure for GCCH (GCC High) tenants.
+  * Updated New-M365DSCConnection to accept and pass Environment parameter to MSCloudLoginAssistant.
+  * Fixed hardcoded login endpoints to dynamically detect government cloud tenants (.us domains).
+  * Added Environment parameter to AADApplication resource as proof-of-concept implementation.
+  * Note: USGov environment covers both GCC and GCC High (GCCH) tenants.
+  * Environment values: Global (commercial), USGov (GCC/GCCH), USGovDoD (DoD), China, Germany.
+  * Resources must be updated individually to expose Environment parameter (see GCCH_IMPLEMENTATION_GUIDE.md).
+* AADApplication
   * Added support for `TokenLifetimePolicies`.
   * Fixing issue where Set-TargetResource threw an error trying to recreate
     an existing permissions scope when id was not provided.

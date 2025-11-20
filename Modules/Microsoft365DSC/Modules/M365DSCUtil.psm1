@@ -2383,7 +2383,12 @@ function New-M365DSCConnection
 
         [Parameter()]
         [System.Boolean]
-        $SkipModuleReload = $false
+        $SkipModuleReload = $false,
+
+        [Parameter()]
+        [ValidateSet('Global', 'China', 'USGov', 'USGovDoD', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     foreach ($requiredModule in $Script:M365DSCRequiredModules)
@@ -2428,6 +2433,13 @@ function New-M365DSCConnection
     {
         Write-Verbose -Message "Initializing the Connected To Workloads List."
         $Script:M365ConnectedToWorkloads = @()
+    }
+
+    # Check if Environment was passed in InboundParameters and use it
+    if ($InboundParameters.ContainsKey('Environment') -and -not [String]::IsNullOrEmpty($InboundParameters.Environment))
+    {
+        $Environment = $InboundParameters.Environment
+        Write-Verbose -Message "Using Environment from InboundParameters: $Environment"
     }
 
     # Get the ApplicationSecret parameter back as a string.
@@ -2484,6 +2496,7 @@ function New-M365DSCConnection
             }
             Connect-M365Tenant -Workload $Workload `
                 -Credential $InboundParameters.Credential `
+                -Environment $Environment `
                 -SkipModuleReload $Global:CurrentModeIsExport
 
             if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-Credential")
@@ -2522,6 +2535,7 @@ function New-M365DSCConnection
             Connect-M365Tenant -Workload $Workload `
                 -Credential $InboundParameters.Credential `
                 -Url $Url `
+                -Environment $Environment `
                 -SkipModuleReload $Global:CurrentModeIsExport
             if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-Credential")
             {
@@ -2568,6 +2582,7 @@ function New-M365DSCConnection
             Connect-M365Tenant -Workload $Workload `
                 -ApplicationId $InboundParameters.ApplicationId `
                 -Credential $InboundParameters.Credential `
+                -Environment $Environment `
                 -SkipModuleReload $Global:CurrentModeIsExport
             if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-CredentialsWithApplicationId")
             {
@@ -2609,6 +2624,7 @@ function New-M365DSCConnection
                 -ApplicationId $InboundParameters.ApplicationId `
                 -Credential $InboundParameters.Credential `
                 -Url $Url `
+                -Environment $Environment `
                 -SkipModuleReload $Global:CurrentModeIsExport
             if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-CredentialsWithApplicationId")
             {
@@ -2669,6 +2685,7 @@ function New-M365DSCConnection
                 -TenantId $InboundParameters.TenantId `
                 -CertificatePassword $InboundParameters.CertificatePassword.Password `
                 -CertificatePath $InboundParameters.CertificatePath `
+                -Environment $Environment `
                 -SkipModuleReload $Global:CurrentModeIsExport
 
             if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-ServicePrincipalWithPath")
@@ -2749,6 +2766,7 @@ function New-M365DSCConnection
                 -ApplicationId $InboundParameters.ApplicationId `
                 -TenantId $InboundParameters.TenantId `
                 -ApplicationSecret $InboundParameters.ApplicationSecret `
+                -Environment $Environment `
                 -SkipModuleReload $Global:CurrentModeIsExport
 
             if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-ServicePrincipalWithSecret")
@@ -2782,6 +2800,7 @@ function New-M365DSCConnection
                 -TenantId $InboundParameters.TenantId `
                 -ApplicationSecret $InboundParameters.ApplicationSecret `
                 -Url $Url `
+                -Environment $Environment `
                 -SkipModuleReload $Global:CurrentModeIsExport
 
             if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-ServicePrincipalWithSecret")
@@ -2818,6 +2837,7 @@ function New-M365DSCConnection
             -ApplicationId $InboundParameters.ApplicationId `
             -TenantId $InboundParameters.TenantId `
             -CertificateThumbprint $InboundParameters.CertificateThumbprint `
+            -Environment $Environment `
             -SkipModuleReload $Global:CurrentModeIsExport `
             -Url $Url
         Write-Verbose -Message "Connection initiated."
@@ -2849,6 +2869,7 @@ function New-M365DSCConnection
             -TenantId $InboundParameters.TenantId `
             -Credential $InboundParameters.Credential `
             -Url $Url `
+            -Environment $Environment `
             -SkipModuleReload $Global:CurrentModeIsExport
         if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-CredentialsWithTenantId")
         {
@@ -2879,6 +2900,7 @@ function New-M365DSCConnection
         Connect-M365Tenant -Workload $Workload `
             -Identity `
             -TenantId $InboundParameters.TenantId `
+            -Environment $Environment `
             -SkipModuleReload $Global:CurrentModeIsExport
 
         if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-ManagedIdentity")
@@ -2911,6 +2933,7 @@ function New-M365DSCConnection
         Connect-M365Tenant -Workload $Workload `
             -AccessTokens $InboundParameters.AccessTokens `
             -TenantId $InboundParameters.TenantId `
+            -Environment $Environment `
             -SkipModuleReload $Global:CurrentModeIsExport
 
         if (-not $Script:M365ConnectedToWorkloads -contains "$Workload-AccessTokens")

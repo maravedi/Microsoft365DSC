@@ -1485,7 +1485,20 @@ function Update-M365DSCAzureAdApplication
                 $username = $Credential.UserName
                 $password = $Credential.GetNetworkCredential().password
 
-                $uri = 'https://login.microsoftonline.com/{0}/oauth2/token' -f $tenantid
+                # Determine login endpoint based on tenant domain (*.us = USGov, *.cn = China)
+                $loginEndpoint = 'https://login.microsoftonline.com'
+                if ($tenantid -match '\.us$')
+                {
+                    $loginEndpoint = 'https://login.microsoftonline.us'
+                    Write-Verbose "Detected US Government tenant, using $loginEndpoint"
+                }
+                elseif ($tenantid -match '\.cn$')
+                {
+                    $loginEndpoint = 'https://login.chinacloudapi.cn'
+                    Write-Verbose "Detected China tenant, using $loginEndpoint"
+                }
+
+                $uri = '{0}/{1}/oauth2/token' -f $loginEndpoint, $tenantid
                 $body = 'resource=74658136-14ec-4630-ad9b-26e160ff0fc6&client_id=1950a258-227b-4e31-a9cf-717495945fc2&grant_type=password&username={1}&password={0}' -f [System.Web.HttpUtility]::UrlEncode($password), $username
                 $token = Invoke-RestMethod $uri `
                     -Method POST `
@@ -1500,6 +1513,7 @@ function Update-M365DSCAzureAdApplication
                 }
 
                 $applicationId = $azureADApp.AppId
+                # IAM portal endpoint (note: may need adjustment for sovereign clouds)
                 $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$applicationId/Consent?onBehalfOfAll=true"
                 try
                 {
