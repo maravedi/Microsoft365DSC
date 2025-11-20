@@ -112,6 +112,11 @@ function Get-TargetResource
         [Parameter()]
         [System.String[]]
         $AccessTokens
+
+        [Parameter()]
+        [ValidateSet('Global', 'USGov', 'USGovDoD', 'China', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     try
@@ -142,6 +147,7 @@ function Get-TargetResource
             $nullReturn.MemberOf = @()
             $nullReturn.AssignedToRole = @()
             $nullReturn.AssignedLicenses = @()
+            $nullReturn.Environment = $Environment
 
             if ($PSBoundParameters.ContainsKey('Id'))
             {
@@ -372,6 +378,7 @@ function Get-TargetResource
             Credential                          = $Credential
             ManagedIdentity                     = $ManagedIdentity.IsPresent
             AccessTokens                        = $AccessTokens
+            Environment                         = $Environment
         }
 
         $result += $policySettings
@@ -504,7 +511,12 @@ function Set-TargetResource
 
         [Parameter()]
         [System.String[]]
-        $AccessTokens
+        $AccessTokens,
+
+        [Parameter()]
+        [ValidateSet('Global', 'USGov', 'USGovDoD', 'China', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     Write-Verbose -Message 'Setting configuration of Azure AD Groups'
@@ -1162,7 +1174,12 @@ function Test-TargetResource
 
         [Parameter()]
         [System.String[]]
-        $AccessTokens
+        $AccessTokens,
+
+        [Parameter()]
+        [ValidateSet('Global', 'USGov', 'USGovDoD', 'China', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     #region Telemetry
@@ -1226,7 +1243,12 @@ function Export-TargetResource
 
         [Parameter()]
         [System.String[]]
-        $AccessTokens
+        $AccessTokens,
+
+        [Parameter()]
+        [ValidateSet('Global', 'USGov', 'USGovDoD', 'China', 'Germany')]
+        [System.String]
+        $Environment = 'Global'
     )
 
     $ConnectionMode = New-M365DSCConnection -Workload 'MicrosoftGraph' `
@@ -1318,6 +1340,7 @@ function Export-TargetResource
                 Credential            = $Credential
                 ManagedIdentity       = $ManagedIdentity.IsPresent
                 AccessTokens          = $AccessTokens
+                Environment           = $Environment
             }
             $Script:exportedInstance = $group
             $Results = Get-TargetResource @Params

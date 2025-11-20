@@ -112,7 +112,10 @@
   ],
   "supportedEnvironments": [
     "Global",
-    "USGov"
+    "USGov",
+    "USGovDoD",
+    "China",
+    "Germany"
   ],
   "mode": "Data",
   "commands": [

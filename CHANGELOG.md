@@ -20,6 +20,7 @@
     if a Group has a Group Lifecycle Policy assigned to it.
   * Fixed an issue where using advanced filtering during export failed.
   * Updated the required permissions to match the used cmdlets.
+  * Added an `Environment` parameter so sovereign clouds (USGov/GCCH, USGovDoD, China, Germany) route to the correct endpoints.
 * AADUser
   * Added new permission requirement `User.EnableDisableAccount.All` for enabling / disabling accounts.
 * EXOIRMConfiguration

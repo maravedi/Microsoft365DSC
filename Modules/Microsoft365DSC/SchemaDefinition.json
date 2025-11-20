@@ -9283,6 +9283,26 @@
                                "Description":  "Access token used for authentication.",
                                "Name":  "AccessTokens",
                                "Option":  "Write"
+                           },
+                           {
+                               "CIMType":  "String",
+                               "Description":  "Specifies the cloud environment (Global, USGov for GCC/GCCH, USGovDoD, China, Germany). USGov covers both GCC and GCCH tenants.",
+                               "Name":  "Environment",
+                               "Option":  "Write",
+                               "ValueMap":  [
+                                                "Global",
+                                                "USGov",
+                                                "USGovDoD",
+                                                "China",
+                                                "Germany"
+                                            ],
+                               "Values":  [
+                                              "Global",
+                                              "USGov",
+                                              "USGovDoD",
+                                              "China",
+                                              "Germany"
+                                          ]
                            }
                        ],
         "Description":  ""
