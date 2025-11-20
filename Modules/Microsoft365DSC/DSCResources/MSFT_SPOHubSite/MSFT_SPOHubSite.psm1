@@ -643,6 +643,8 @@ function Export-TargetResource
             $principal = $organization.Split('.')[0]
         }
 
+        $sharePointSuffix = Get-M365DSCSharePointHostSuffix -TenantId $organization
+
         $dscContent = ''
         foreach ($hub in $hubSites)
         {
@@ -678,7 +680,9 @@ function Export-TargetResource
             if ($currentDSCBlock.ToLower().Contains($organization.ToLower()) -or `
                     $currentDSCBlock.ToLower().Contains($principal.ToLower()))
             {
-                $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('https://' + $principal + '.sharepoint.com/'), "https://`$(`$OrganizationName.Split('.')[0]).sharepoint.com/"
+                $tenantSiteUrl = "https://$principal$sharePointSuffix/"
+                $orgSiteReplacement = "https://`$(`$OrganizationName.Split('.')[0])$sharePointSuffix/"
+                $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape($tenantSiteUrl), $orgSiteReplacement
                 $currentDSCBlock = $currentDSCBlock -ireplace [regex]::Escape('@' + $organization), "@`$(`$OrganizationName)"
             }
             $dscContent += $currentDSCBlock

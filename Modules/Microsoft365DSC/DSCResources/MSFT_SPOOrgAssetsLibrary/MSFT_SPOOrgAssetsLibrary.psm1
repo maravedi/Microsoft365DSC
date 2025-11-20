@@ -76,7 +76,9 @@ function Get-TargetResource
         {
             $tenantName = $TenantId.Split('.')[0]
         }
-        $orgLibraryUrl = "https://$tenantName.sharepoint.com/$($Script:exportedInstance.libraryurl.DecodedUrl)"
+        $sharePointSuffix = Get-M365DSCSharePointHostSuffix -TenantId $TenantId
+        $tenantBaseUrl = "https://$tenantName$sharePointSuffix"
+        $orgLibraryUrl = "$tenantBaseUrl/$($Script:exportedInstance.libraryurl.DecodedUrl)"
 
         if (-not $Script:exportedInstance -or $orgLibraryUrl -ne $LibraryUrl)
         {
@@ -119,15 +121,15 @@ function Get-TargetResource
                 return $nullReturn
             }
 
-            foreach ($asset in $orgAssets)
-            {
-                $orgLibraryUrl = "https://$tenantName.sharepoint.com/$($asset.libraryurl.DecodedUrl)"
-                if ($orgLibraryUrl -eq $LibraryUrl)
+                foreach ($asset in $orgAssets)
                 {
-                    $orgAsset = $asset
-                    break
+                    $orgLibraryUrl = "$tenantBaseUrl/$($asset.libraryurl.DecodedUrl)"
+                    if ($orgLibraryUrl -eq $LibraryUrl)
+                    {
+                        $orgAsset = $asset
+                        break
+                    }
                 }
-            }
         }
         else
         {
@@ -137,7 +139,7 @@ function Get-TargetResource
         Write-Verbose -Message "Found existing SharePoint Org Site Assets for $LibraryUrl"
         if ($null -ne $orgAsset.ThumbnailUrl.DecodedUrl)
         {
-            $orgthumbnailUrl = "https://$tenantName.sharepoint.com/$($orgAsset.LibraryUrl.decodedurl.Substring(0,$orgAsset.LibraryUrl.decodedurl.LastIndexOf('/')))/$($orgAsset.ThumbnailUrl.decodedurl)"
+            $orgthumbnailUrl = "$tenantBaseUrl/$($orgAsset.LibraryUrl.decodedurl.Substring(0,$orgAsset.LibraryUrl.decodedurl.LastIndexOf('/')))/$($orgAsset.ThumbnailUrl.decodedurl)"
         }
 
         $result = @{
@@ -430,6 +432,17 @@ function Export-TargetResource
         #Ensure the proper dependencies are installed in the current environment.
         Confirm-M365DSCDependencies
 
+        if ($ConnectionMode -eq 'Credentials')
+        {
+            $tenantName = Get-M365TenantName -Credential $Credential
+        }
+        else
+        {
+            $tenantName = $TenantId.Split('.')[0]
+        }
+        $sharePointSuffix = Get-M365DSCSharePointHostSuffix -TenantId $TenantId
+        $tenantBaseUrl = "https://$tenantName$sharePointSuffix"
+
         #region Telemetry
         $ResourceName = $MyInvocation.MyCommand.ModuleName -replace 'MSFT_', ''
         $CommandName = $MyInvocation.MyCommand
@@ -463,7 +476,7 @@ function Export-TargetResource
                 Write-M365DSCHost -Message "    [$i/$($orgAssets.Length)] $($orgAssetLib.libraryurl.DecodedUrl)" -DeferWrite
                 $Params = @{
                     Credential            = $Credential
-                    LibraryUrl            = "https://$tenantName.sharepoint.com/$($orgAssetLib.libraryurl.DecodedUrl)"
+                    LibraryUrl            = "$tenantBaseUrl/$($orgAssetLib.libraryurl.DecodedUrl)"
                     ApplicationId         = $ApplicationId
                     TenantId              = $TenantId
                     CertificatePassword   = $CertificatePassword

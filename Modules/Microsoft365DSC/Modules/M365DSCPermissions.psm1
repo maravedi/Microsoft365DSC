@@ -1484,8 +1484,8 @@ function Update-M365DSCAzureAdApplication
                 $tenantid = $Credential.UserName.Split('@')[1]
                 $username = $Credential.UserName
                 $password = $Credential.GetNetworkCredential().password
-
-                $uri = 'https://login.microsoftonline.com/{0}/oauth2/token' -f $tenantid
+                $authorityBaseUrl = Get-M365DSCLoginAuthorityBaseUrl -TenantIdentifier $tenantid
+                $uri = '{0}/{1}/oauth2/token' -f $authorityBaseUrl, $tenantid
                 $body = 'resource=74658136-14ec-4630-ad9b-26e160ff0fc6&client_id=1950a258-227b-4e31-a9cf-717495945fc2&grant_type=password&username={1}&password={0}' -f [System.Web.HttpUtility]::UrlEncode($password), $username
                 $token = Invoke-RestMethod $uri `
                     -Method POST `
@@ -1500,7 +1500,8 @@ function Update-M365DSCAzureAdApplication
                 }
 
                 $applicationId = $azureADApp.AppId
-                $url = "https://main.iam.ad.ext.azure.com/api/RegisteredApplications/$applicationId/Consent?onBehalfOfAll=true"
+                $azurePortalBaseUrl = Get-M365DSCAzurePortalBaseUrl -TenantIdentifier $tenantid
+                $url = "$azurePortalBaseUrl/api/RegisteredApplications/$applicationId/Consent?onBehalfOfAll=true"
                 try
                 {
                     $null = Invoke-RestMethod -Uri $url -Headers $headers -Method POST -ErrorAction Stop
